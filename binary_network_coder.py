@@ -1,12 +1,11 @@
-import numpy as np
-import sympy as sp
-from matrix_utilities import binary_mat_rank
+import random
+from matrix_utilities import bin_mat_rref, bin_mat_dot, identity
 
 
 class BinaryCoder(object):
     """ Network Coding class allowing for operations on binary field.
 
-    Performance is sacrified by keeping to python, numpy and sympy data types.
+    Performance is sacrified by keeping to python data types.
     However, this allows for a much more simple implementation which can be easily undestood.
     """
     
@@ -20,12 +19,11 @@ class BinaryCoder(object):
     def reset(self):
         self.num_independent = 0
         self.symbol_decoded = [False] * self.num_symbols
-        self.coefficient_matrix = np.zeros((self.num_symbols, self.num_symbols), dtype=self.NUM_D_TYPE)
-        self.packet_vector = np.zeros((self.num_symbols, self.num_bit_packet), dtype=self.NUM_D_TYPE)
-        self.might_need_solving = False
+        self.id = identity(self.num_symbols)
         # Add identity to track transformation of rref
         # See: https://stackoverflow.com/questions/43495305/transformation-matrix-of-reduced-row-echelon-form
-        self.aug_coefficient_matrix = sp.Matrix(np.concatenate((self.coefficient_matrix, np.eye(self.num_symbols)), axis=1)).applyfunc(sp.nsimplify)
+        self.coefficient_matrix = [ [0] * self.num_symbols + self.id[k] for k in range(self.num_symbols)] # save current rref to reduce computational load in the future
+        self.packet_vector = [ [0] * self.num_bit_packet  for _ in range(self.num_symbols)]
 
     def is_symbol_decoded(self, index):
         """Returns the decoding status for a given symbol at index."""
@@ -38,13 +36,12 @@ class BinaryCoder(object):
             symbol = self.packet_vector[index, :]
         return symbol
 
+    def get_num_decoded(self):
+        return sum(self.symbol_decoded)
+
     def is_fully_decoded(self):
         """Returns true, if all symbols are decoded."""
         return all(self.symbol_decoded)
-
-    def seen_encoded_symbols(self):
-        """Checks if a specifiy symbol was included in some of the already received encoded symbols."""
-        return [np.sum(self.coefficient_matrix, 0) > 0]
 
     def rank(self):
         """Returns current rank of the coefficient matrix."""
@@ -52,43 +49,25 @@ class BinaryCoder(object):
 
     def consume_packet(self, coefficients, packet):
         """Processes an encoded symbol together with its coefficients."""
-        # heuristically add new symbol if not already finished
         if not self.is_fully_decoded():
-            self.coefficient_matrix[self.num_independent, :] = coefficients
-            # new packet increased coefficient matrix rank
-            if binary_mat_rank(self.coefficient_matrix) > self.num_independent:
-                # Accept new packet
-                self.aug_coefficient_matrix[:,0:self.num_symbols] = self.coefficient_matrix
-                self.packet_vector[self.num_independent, :] = packet
-                self.num_independent += 1
-                self.might_need_solving = True
-            else:
-                # packet is linear combination, we have to remove it again
-                self.coefficient_matrix[self.num_independent, :] = np.zeros((1, self.num_symbols), dtype=self.NUM_D_TYPE)
-
-
-    def solve(self):
-        # we can only (partially) solve if a packet increased the rank of the coefficients matrix
-        if self.might_need_solving:
-            self.might_need_solving = False # consume flag
-            extended_rref, _ = self.aug_coefficient_matrix.rref() # solve
-            transformation = extended_rref[:, self.num_symbols:2*self.num_symbols] # pick out transformation matrix from solved augmented matrix
-            scaler = transformation.det().q # since sympy.rref() works on floats, we need to convert to ints again using the smallest denominator
-
-            if scaler % 2 != 0: # We can't use even scalers as it would break the mod 2
-                transformation = transformation*scaler # Remove normailization to get to ints
-                transformation = np.array(transformation.tolist(), dtype=self.NUM_D_TYPE) # switch from sympy to numpy
-                rref = (transformation@self.coefficient_matrix) % 2 # appyl the same transformation to the coefficient matrix which was used to generate the rref
-                
-                self.symbol_decoded = [np.count_nonzero(rref[row_id, :]) == 1 for row_id in range(self.num_symbols)] # check if we succesfully decoded a symbol
-                self.coefficient_matrix = rref # save current rref to reduce computational load in the future
-                self.packet_vector = (transformation@self.packet_vector) % 2 # apply transformation to the packet vector as well
-                self.aug_coefficient_matrix[:,0:self.num_symbols] = self.coefficient_matrix # update aug method so that we don't need to construct it every iteration
+            # add new symbol to decoder matrix and packet vector
+            self.coefficient_matrix[self.num_independent][0:self.num_symbols] = coefficients
+            self.packet_vector[self.num_independent] = packet
+            # calculate row reduced echolon form
+            extended_rref, self.num_independent, self.symbol_decoded = bin_mat_rref(self.coefficient_matrix)
+            # extract transformation matrix
+            transformation = [row[self.num_symbols:2*self.num_symbols] for row in extended_rref]
+            # apply transformation to the packet vector as well
+            self.packet_vector = bin_mat_dot(transformation,self.packet_vector)
+            # extract rref matrix
+            rref = [row[0:self.num_symbols] for row in extended_rref]
+            # construct new extended coefficient matrix
+            self.coefficient_matrix = [rref[k] + self.id[k] for k in range(self.num_symbols)]
 
     def get_sys_coded_packet(self, index):
-        """Returns a uncoded packet, if symbol was already decoded."""
+        """Returns an uncoded packet, if symbol was already decoded."""
         if self.is_symbol_decoded(index):
-            coefficients = np.zeros((self.num_symbols,), dtype=self.NUM_D_TYPE)
+            coefficients = [0] * self.num_symbols
             coefficients[index] = 1
             packet = self.packet_vector[index, :]
         else:
@@ -98,13 +77,13 @@ class BinaryCoder(object):
 
     def get_new_coded_packet(self):
         """Select a random number of rows of the coefficient matrix and return the XOR of the associated packets and coefficients."""
-        coefficients = 0
+        coefficients = [0] * self.num_symbols
         # "lazy-ensure" that coefficient vector is not all zeros (equal to empty information)
-        while np.sum(coefficients) == 0:
-            to_be_included = [True] * self.num_symbols # default exclude all coefficients
-            random_decisions = np.random.choice(a=[False, True], size=(1,self.num_independent,))[0]
-            to_be_included[0:self.num_independent] = random_decisions # overide for already received coefficients
-            coefficients = np.sum(self.coefficient_matrix[to_be_included], 0) % 2
-
-        packet = np.sum(self.packet_vector[coefficients > 0], 0) % 2
+        while sum(coefficients) == 0:
+            random_num = random.randint(0,self.num_independent)
+            random_decisions = random.choices(range(self.num_independent), k=random_num)
+            coefficients = [0] * self.num_symbols
+            for k in range(self.num_symbols):
+                coefficients[k] = sum([self.coefficient_matrix[selected][k] for selected in random_decisions])%2
+        packet = bin_mat_dot([coefficients],self.packet_vector)[0]
         return coefficients, packet
