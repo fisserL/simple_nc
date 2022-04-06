@@ -1,5 +1,5 @@
 import random
-from matrix_utilities import bin_mat_rref, bin_mat_dot, identity
+from .matrix_utilities import bin_mat_rref, bin_mat_dot, identity
 
 
 class BinaryCoder(object):

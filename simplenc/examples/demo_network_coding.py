@@ -1,6 +1,6 @@
 import random
 import time
-from binary_network_coder import BinaryCoder
+from simplenc import BinaryCoder
 
 if __name__ == "__main__":
     ## Parameter
