@@ -42,10 +42,14 @@ def bin_mat_dot(K, L):
     num_cols = len(K[0])
     num_bits = len(L[0])
     for row in range(num_rows):
-        row_solution =  [0]*num_bits
-        for k in range(num_cols):
-            for j in range(num_bits):
-                row_solution[j] = (row_solution[j] + K[row][k]*L[k][j])%2
+        if sum(K[row])>1 or K[row][row]==0:
+            row_solution =  [0]*num_bits
+            for k in range(num_cols):
+                if K[row][k]:
+                    for j in range(num_bits):
+                        row_solution[j] = (row_solution[j] + K[row][k]*L[k][j])%2
+        else:
+            row_solution = L[row]
         result.append(row_solution)
     return result
 
