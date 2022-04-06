@@ -83,7 +83,9 @@ class BinaryCoder(object):
             random_num = random.randint(0,self.num_independent)
             random_decisions = random.choices(range(self.num_independent), k=random_num)
             coefficients = [0] * self.num_symbols
-            for k in range(self.num_symbols):
+            for k in range(self.num_symbols):                       
                 coefficients[k] = sum([self.coefficient_matrix[selected][k] for selected in random_decisions])%2
-        packet = bin_mat_dot([coefficients],self.packet_vector)[0]
+            packet = [0] * self.num_bit_packet
+            for l in range(self.num_bit_packet):
+                packet[l] = sum([self.packet_vector[selected][l] for selected in random_decisions])%2
         return coefficients, packet
