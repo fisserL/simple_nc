@@ -11,9 +11,11 @@ class BinaryCoder(object):
     
     NUM_D_TYPE = int # The datatype of underlying numpy arrays
 
-    def __init__(self, num_symbols, packet_size):
+    def __init__(self, num_symbols, packet_size, rng_seed):
         self.num_symbols = num_symbols
         self.num_bit_packet = packet_size
+        self.random = random.Random()
+        self.random.seed(rng_seed)
         self.reset()
 
     def reset(self):
@@ -80,8 +82,8 @@ class BinaryCoder(object):
         coefficients = [0] * self.num_symbols
         # "lazy-ensure" that coefficient vector is not all zeros (equal to empty information)
         while sum(coefficients) == 0:
-            random_num = random.randint(0,self.num_independent)
-            random_decisions = random.choices(range(self.num_independent), k=random_num)
+            random_num = self.random.randint(0,self.num_independent)
+            random_decisions = self.random.choices(range(self.num_independent), k=random_num)
             coefficients = [0] * self.num_symbols
             for k in range(self.num_symbols):                       
                 coefficients[k] = sum([self.coefficient_matrix[selected][k] for selected in random_decisions])%2
