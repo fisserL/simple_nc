@@ -6,18 +6,23 @@ def bin_mat_rref(A):
 
     # forward sweep
     for col in range(n):
+        num_cols = len(A)
         j = 0
         rows = []
-        while j < len(A):
+        # precompute relevant rows
+        while j < num_cols:
             if A[j][col] == 1:
                 rows += [j]
             j += 1
+        
+        # process each row
         if len(rows) >= 1:
             for c in range(1, len(rows)):
                 for k in range(n):
                     A[rows[c]][k] = (A[rows[c]][k] + A[rows[0]][k]) % 2
-            B.append(A[rows[0]]) # Copy to partial ref
+            B.append(A[rows[0]]) # Copy for backwards sweep
             A.pop(rows[0])
+
     n = len(B)
     nk = len(B[0])
 
@@ -30,9 +35,12 @@ def bin_mat_rref(A):
                 if B[to_reduce_row][row] == 1:
                     for k in range(to_reduce_row,nk):
                         B[to_reduce_row][k] = (B[to_reduce_row][k]+B[row][k])%2
-                        
-    rank = sum([sum(row[0:int(len(row)/2)]) >= 1 for row in B])
-    is_decoded = [sum(row[0:int(len(row)/2)]) == 1 for row in B]
+
+    symbol_cutoff = int(len(B[0])/2) # The cutoff where symbols end and the transformation starts   
+    row_sums = [sum(row[0:symbol_cutoff]) for row in B]
+    rank = sum([row_sum >= 1 for row_sum in row_sums])
+    is_decoded = [row_sum == 1 for row_sum in row_sums]
+
     return B, rank, is_decoded
 
 
@@ -41,6 +49,7 @@ def bin_mat_dot(K, L):
     num_rows = len(K)
     num_cols = len(K[0])
     num_bits = len(L[0])
+    
     for row in range(num_rows):
         if sum(K[row])>1 or K[row][row]==0:
             row_solution =  [0]*num_bits
