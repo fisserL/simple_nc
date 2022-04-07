@@ -80,14 +80,18 @@ class BinaryCoder(object):
     def get_new_coded_packet(self):
         """Select a random number of rows of the coefficient matrix and return the XOR of the associated packets and coefficients."""
         coefficients = [0] * self.num_symbols
+        packet = [0] * self.num_bit_packet
+        
         # "lazy-ensure" that coefficient vector is not all zeros (equal to empty information)
         while sum(coefficients) == 0:
             random_num = self.random.randint(0,self.num_independent)
             random_decisions = self.random.choices(range(self.num_independent), k=random_num)
             coefficients = [0] * self.num_symbols
-            for k in range(self.num_symbols):                       
-                coefficients[k] = sum([self.coefficient_matrix[selected][k] for selected in random_decisions])%2
-            packet = [0] * self.num_bit_packet
-            for l in range(self.num_bit_packet):
-                packet[l] = sum([self.packet_vector[selected][l] for selected in random_decisions])%2
+            selected_coefficients = [self.coefficient_matrix[selected][0:self.num_symbols] for selected in random_decisions]
+            coefficients = [sum(x)%2 for x in zip(*selected_coefficients)] # elementwise addition of each selected coefficient
+
+        # add selected rows' payloads to packet
+        for l in range(self.num_bit_packet):
+            packet[l] = sum([self.packet_vector[selected][l] for selected in random_decisions])%2
+
         return coefficients, packet
