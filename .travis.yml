@@ -1,6 +1,0 @@
-language: python
-python:
-  - "3.6"
-script:
- - pip install .
- - python tests/unit_test.py

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Run a multi-line script
+      - name: build and run unit_test.py
         run: |
           pip install .
           python3 tests/unit_test.py
