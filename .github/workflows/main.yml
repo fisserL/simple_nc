@@ -10,7 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: build and run unit_test.py
+      - name: install dependencies 
         run: |
           pip install .
-          python3 tests/unit_test.py
+          pip install coverage
+      - name: unittest
+        run:
+          coverage run -m unittest tests/unit_test.py 
+          coverage report
