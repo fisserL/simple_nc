@@ -1,5 +1,3 @@
-[![Build Status](https://app.travis-ci.com/fisserL/simple_nc.svg?branch=main)](https://app.travis-ci.com/fisserL/simple_nc)
-
 # Simple Network Coding in Python
 
 This is a hobbyist demo of Network Coding on the binary field.  
