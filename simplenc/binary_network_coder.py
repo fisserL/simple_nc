@@ -35,7 +35,7 @@ class BinaryCoder(object):
         """Returns the symbol if already decoded, otherwise returns None."""
         symbol = None
         if self.is_symbol_decoded(index):
-            symbol = self.packet_vector[index, :]
+            symbol = self.packet_vector[index]
         return symbol
 
     def get_num_decoded(self):
@@ -71,7 +71,7 @@ class BinaryCoder(object):
         if self.is_symbol_decoded(index):
             coefficients = [0] * self.num_symbols
             coefficients[index] = 1
-            packet = self.packet_vector[index, :]
+            packet = self.packet_vector[index]
         else:
             coefficients = None
             packet = None
