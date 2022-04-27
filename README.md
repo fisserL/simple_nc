@@ -1,7 +1,7 @@
 # Simple Network Coding in Python
 [![CI](https://github.com/fisserL/simple_nc/actions/workflows/main.yml/badge.svg)](https://github.com/fisserL/simple_nc/actions/workflows/main.yml)
 
-This is a hobbyist demo of Network Coding on the binary field.  
+This is a hobbyist demo of Random Linear Network Coding (RLNC) on the binary field.  
 The implementation sticks to native Python data types and tries to be as simple to understand as possible.  
 Of course this will result in non-optimal performance, both in encoding and decoding.
 
