@@ -13,8 +13,8 @@ if __name__ == "__main__":
     ## Initialization
     random.seed(rng_seed)
 
-    encoder = BinaryCoder(num_symbols, num_bit_packet)
-    decoder = BinaryCoder(num_symbols, num_bit_packet)
+    encoder = BinaryCoder(num_symbols, num_bit_packet, rng_seed)
+    decoder = BinaryCoder(num_symbols, num_bit_packet, rng_seed)
 
     # initalize encoder with random bit packets
     for packet_id in range(encoder.num_symbols):
