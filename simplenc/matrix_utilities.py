@@ -39,8 +39,8 @@ def bin_mat_rref(A):
     symbol_cutoff = int(len(B[0])/2) # The cutoff where symbols end and the transformation starts   
     row_sums = [sum(row[0:symbol_cutoff]) for row in B]
     rank = sum([row_sum >= 1 for row_sum in row_sums])
-    is_decoded = [row_sum == 1 for row_sum in row_sums]
-
+    decoded_symbols = [row.index(1) for row in B if sum(row[0:symbol_cutoff])==1]
+    is_decoded = [True if x in decoded_symbols else False for x in range(0,n)]
     return B, rank, is_decoded
 
 
