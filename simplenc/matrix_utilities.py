@@ -28,13 +28,16 @@ def bin_mat_rref(A):
     # backwards sweep
     for row in range(n-1,-1,-1):
         # check if the current row contains an identity leading 1
-        if sum(B[row][:n]) == 1:
-            leading_one = B[row].index(1)
+        try:
+            leading_one = B[row][:n].index(1)
             # subtract from all other rows which have a 1 at the current row index
             for to_reduce_row in range(row-1,-1,-1):
                 if B[to_reduce_row][leading_one] == 1:
                     for k in range(to_reduce_row,nk):
                         B[to_reduce_row][k] = (B[to_reduce_row][k]+B[row][k])%2
+        except ValueError:
+            # tough luck, no symbol entry, moving up
+            pass
 
     symbol_cutoff = int(len(B[0])/2) # The cutoff where symbols end and the transformation starts   
     row_sums = [sum(row[0:symbol_cutoff]) for row in B]
