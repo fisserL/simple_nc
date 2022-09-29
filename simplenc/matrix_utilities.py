@@ -25,14 +25,14 @@ def bin_mat_rref(A):
 
     n = len(B)
     nk = len(B[0])
-
     # backwards sweep
     for row in range(n-1,-1,-1):
         # check if the current row contains an identity leading 1
-        if B[row][row] == 1:
+        if sum(B[row][:n]) == 1:
+            leading_one = B[row].index(1)
             # subtract from all other rows which have a 1 at the current row index
             for to_reduce_row in range(row-1,-1,-1):
-                if B[to_reduce_row][row] == 1:
+                if B[to_reduce_row][leading_one] == 1:
                     for k in range(to_reduce_row,nk):
                         B[to_reduce_row][k] = (B[to_reduce_row][k]+B[row][k])%2
 
